@@ -4,6 +4,8 @@
 # cl-flx
 > Rewrite emacs-flx in Common Lisp
 
+[![CI](https://github.com/the-flx/cl-flx/actions/workflows/test.yml/badge.svg)](https://github.com/the-flx/cl-flx/actions/workflows/test.yml)
+
 ## 🔨 Usage
 
 ```lisp
