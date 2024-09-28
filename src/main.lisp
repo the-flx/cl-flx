@@ -2,8 +2,6 @@
   (:use :cl)
   (:export score))
 
-(ql:quickload "str")
-
 (in-package :flx)
 
 (defvar word-separators '(#\Space #\- #\_ #\: #\. #\/ #\\)
@@ -23,7 +21,7 @@
   "Check if CHAR is an uppercase character."
   (and char
        (word-p char)
-       (= char (str:upcase char))))
+       (equal char (string-upcase char))))
 
 (defun boundary-p (last-char char)
   "Check if LAST-CHAR is the end of a word and CHAR the start of the next.
@@ -58,17 +56,17 @@ Value is a sorted list of indexes for character occurrences."
   (let* ((res (make-hash-table :test 'eq :size 32))
          (str-len (length str))
          down-char)
-    (cl-loop for index from (1- str-len) downto 0
-             for char = (aref str index)
-             do (progn
-                  ;; simulate `case-fold-search'
-                  (if (capital-p char)
-                      (progn
-                        (push index (gethash char res))
-                        (setq down-char (downcase char)))
-                      (setq down-char char))
-                  (push index (gethash down-char res))))
-    (puthash 'heatmap (funcall heatmap-func str) res)
+    (loop for index from (1- str-len) downto 0
+          for char = (aref str index)
+          do (progn
+               ;; simulate `case-fold-search'
+               (if (capital-p char)
+                   (progn
+                     (push index (gethash char res))
+                     (setq down-char (string-downcase char)))
+                   (setq down-char char))
+               (push index (gethash down-char res))))
+    (setf (gethash 'heatmap res) (funcall heatmap-func str))
     res))
 
 ;; So we store one fixnum per character.  Is this too memory inefficient?
@@ -79,117 +77,106 @@ See documentation for logic."
   (let* ((str-len (length str))
          (str-last-index (1- str-len))
          ;; ++++ base
-         (scores (make-vector str-len -35))
-         (penalty-lead ?.)
+         (scores (make-array str-len :initial-element -35))
+         (penalty-lead #\.)
          (groups-alist (list (list -1 0))))
     ;; ++++ final char bonus
-    (cl-incf (aref scores str-last-index) 1)
+    (incf (aref scores str-last-index) 1)
     ;; Establish baseline mapping
-    (cl-loop for char across str
-             for index from 0
-             with last-char = nil
-             with group-word-count = 0
-             do (progn
-                  (let ((effective-last-char
-                          ;; before we find any words, all separaters are
-                          ;; considered words of length 1.  This is so "foo/__ab"
-                          ;; gets penalized compared to "foo/ab".
-                          (if (zerop group-word-count) nil last-char)))
-                    (when (boundary-p effective-last-char char)
-                      (setcdr (cdar groups-alist)
-                              (cons index (cl-cddar groups-alist))))
-                    (when (and (not (word-p last-char))
-                               (word-p char))
-                      (cl-incf group-word-count)))
-                  ;; ++++ -45 penalize extension
-                  (when (eq last-char penalty-lead)
-                    (cl-incf (aref scores index) -45))
-                  (when (eq group-separator char)
-                    (setcar (cdar groups-alist) group-word-count)
-                    (setq group-word-count 0)
-                    (push (nconc (list index group-word-count)) groups-alist))
-                  (if (= index str-last-index)
-                      (setcar (cdar groups-alist) group-word-count)
-                      (setq last-char char))))
+    (loop for char across str
+          for index from 0
+          with last-char = nil
+          with group-word-count = 0
+          do (progn
+               (let ((effective-last-char
+                       ;; before we find any words, all separaters are
+                       ;; considered words of length 1.  This is so "foo/__ab"
+                       ;; gets penalized compared to "foo/ab".
+                       (if (zerop group-word-count) nil last-char)))
+                 (when (boundary-p effective-last-char char)
+                   (setf (cdr (cdar groups-alist))
+                         (cons index (cddar groups-alist))))
+                 (when (and (not (word-p last-char))
+                            (word-p char))
+                   (incf group-word-count)))
+               ;; ++++ -45 penalize extension
+               (when (eq last-char penalty-lead)
+                 (incf (aref scores index) -45))
+               (when (eq group-separator char)
+                 (setf (car (cdar groups-alist)) group-word-count)
+                 (setq group-word-count 0)
+                 (push (nconc (list index group-word-count)) groups-alist))
+               (if (= index str-last-index)
+                   (setf (car (cdar groups-alist)) group-word-count)
+                   (setq last-char char))))
     (let* ((group-count (length groups-alist))
            (separator-count (1- group-count)))
       ;; ++++ slash group-count penalty
       (unless (zerop separator-count)
         (inc-vec scores (* -2 group-count)))
       ;; score each group further
-      (cl-loop for group in groups-alist
-               for index from separator-count downto 0
-               with last-group-limit = nil
-               with basepath-found = nil
-               do (let ((group-start (car group))
-                        (word-count (cadr group))
-                        ;; this is the number of effective word groups
-                        (words-length (length (cddr group)))
-                        basepath-p)
-                    (when (and (not (zerop words-length))
-                               (not basepath-found))
-                      (setq basepath-found t)
-                      (setq basepath-p t))
-                    (let (num)
-                      (setq num
-                            (if basepath-p
-                                (+ 35
-                                   ;; ++++ basepath separator-count boosts
-                                   (if (> separator-count 1)
-                                       (1- separator-count)
-                                       0)
-                                   ;; ++++ basepath word count penalty
-                                   (- word-count))
-                                ;; ++++ non-basepath penalties
-                                (if (= index 0)
-                                    -3
-                                    (+ -5 (1- index)))))
-                      (inc-vec scores num (1+ group-start) last-group-limit))
-                    (cl-loop for word in (cddr group)
-                             for word-index from (1- words-length) downto 0
-                             with last-word = (or last-group-limit
-                                                  str-len)
-                             do (progn
-                                  (cl-incf (aref scores word)
-                                           ;; ++++  beg word bonus AND
-                                           85)
-                                  (cl-loop for index from word below last-word
-                                           for char-i from 0
-                                           do (cl-incf (aref scores index)
-                                                       (-
-                                                        ;; ++++ word order penalty
-                                                        (* -3 word-index)
-                                                        ;; ++++ char order penalty
-                                                        char-i)))
-                                  (setq last-word word)))
-                    (setq last-group-limit (1+ group-start)))))
+      (loop for group in groups-alist
+            for index from separator-count downto 0
+            with last-group-limit = nil
+            with basepath-found = nil
+            do (let ((group-start (car group))
+                     (word-count (cadr group))
+                     ;; this is the number of effective word groups
+                     (words-length (length (cddr group)))
+                     basepath-p)
+                 (when (and (not (zerop words-length))
+                            (not basepath-found))
+                   (setq basepath-found t)
+                   (setq basepath-p t))
+                 (let (num)
+                   (setq num
+                         (if basepath-p
+                             (+ 35
+                                ;; ++++ basepath separator-count boosts
+                                (if (> separator-count 1)
+                                    (1- separator-count)
+                                    0)
+                                ;; ++++ basepath word count penalty
+                                (- word-count))
+                             ;; ++++ non-basepath penalties
+                             (if (= index 0)
+                                 -3
+                                 (+ -5 (1- index)))))
+                   (inc-vec scores num (1+ group-start) last-group-limit))
+                 (loop for word in (cddr group)
+                       for word-index from (1- words-length) downto 0
+                       with last-word = (or last-group-limit
+                                            str-len)
+                       do (progn
+                            (incf (aref scores word)
+                                  ;; ++++  beg word bonus AND
+                                  85)
+                            (loop for index from word below last-word
+                                  for char-i from 0
+                                  do (incf (aref scores index)
+                                           (-
+                                            ;; ++++ word order penalty
+                                            (* -3 word-index)
+                                            ;; ++++ char order penalty
+                                            char-i)))
+                            (setq last-word word)))
+                 (setq last-group-limit (1+ group-start)))))
     scores))
 
 (defun get-heatmap-file (filename)
   "Return heatmap vector for filename."
-  (get-heatmap-str filename ?/))
+  (get-heatmap-str filename #\/))
 
 
-(defsubst bigger-sublist (sorted-list val)
+(defun bigger-sublist (sorted-list val)
   "Return sublist bigger than VAL from sorted SORTED-LIST.
 
 If VAL is nil, return entire list."
   (if val
-      (cl-loop for sub on sorted-list
-               do (when (> (car sub) val)
-                    (cl-return sub)))
+      (loop for sub on sorted-list
+            do (when (> (car sub) val)
+                 (return sub)))
       sorted-list))
-
-(defun make-filename-cache ()
-  "Return cache hashtable appropriate for storing filenames."
-  (make-string-cache 'get-heatmap-file))
-
-(defun make-string-cache (&optional heat-func)
-  "Return cache hashtable appropriate for storing strings."
-  (let ((hash (make-hash-table :test 'equal
-                               :size 4096)))
-    (puthash 'heatmap-func (or heat-func 'get-heatmap-str) hash)
-    hash))
 
 (defun process-cache (str cache)
   "Get calculated heatmap from cache, add it if necessary."
@@ -202,7 +189,7 @@ If VAL is nil, return entire list."
                      (or (and cache (gethash 'heatmap-func cache))
                          'get-heatmap-str)))
           (when cache
-            (puthash str res cache))
+            (setf (gethash str res) cache))
           res))))
 
 (defun find-best-match (str-info
@@ -282,9 +269,10 @@ For other parameters, see `score'"
                                                       0)))))))))
 
           ;; Calls are cached to avoid exponential time complexity
-          (puthash hash-key
-                   (if match match 'no-match)
-                   match-cache)
+          ;; (puthash hash-key
+          ;;          (if match match 'no-match)
+          ;;          match-cache)
+          ;;(setf (gethash hash-key (if match match 'no-match)) match-cache)
           match))))
 
 (defun score (str query &optional cache)
@@ -297,9 +285,6 @@ For other parameters, see `score'"
          (query-length (length query))
          (full-match-boost (and (< 1 query-length)
                                 (< query-length 5)))
-
-         ;; Raise recursion limit
-         (max-lisp-eval-depth 5000)
 
          ;; Dynamic Programming table for memoizing find-best-match
          (match-cache (make-hash-table :test 'eql :size 10))
@@ -319,8 +304,8 @@ For other parameters, see `score'"
             (if (and full-match-boost
                      (=  (length (caar optimal-match))
                          (length str)))
-                (+ (cl-cadar optimal-match) 10000)
-                (cl-cadar optimal-match))
+                (+ (cadar optimal-match) 10000)
+                (cadar optimal-match))
 
             ;; This is the list of match positions
             (caar optimal-match))))))

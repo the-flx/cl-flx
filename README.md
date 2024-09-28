@@ -6,7 +6,9 @@
 
 ## 🔨 Usage
 
-WIP.
+```lisp
+(flx:score "buffer-file-name" "bfn")  ; '(237 0 7 12)
+```
 
 ## ⚜️ License
 
