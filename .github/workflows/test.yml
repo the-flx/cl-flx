@@ -17,7 +17,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os:
+          - ubuntu-latest
+          #- macos-latest
+          #- windows-latest
         lisp:
           - sbcl
           - ccl-bin
@@ -33,4 +36,4 @@ jobs:
 
     - name: Run tests
       run: |
-        echo ${LISP}
+        sbcl --script ./test/test.lisp
