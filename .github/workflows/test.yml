@@ -30,10 +30,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - uses: 40ants/setup-lisp@master
+    - name: Setup SBCL
+      uses: cheeze2000/setup-sbcl@master
       with:
-        asdf-system: cl-info
+        version: 2.4.2
 
     - name: Run tests
       run: |
-        ${{ env.LISP }} --script ./test/test.lisp
+        sbcl --script ./test/test.lisp
