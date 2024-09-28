@@ -163,11 +163,6 @@ See documentation for logic."
                  (setq last-group-limit (1+ group-start)))))
     scores))
 
-(defun get-heatmap-file (filename)
-  "Return heatmap vector for filename."
-  (get-heatmap-str filename #\/))
-
-
 (defun bigger-sublist (sorted-list val)
   "Return sublist bigger than VAL from sorted SORTED-LIST.
 
