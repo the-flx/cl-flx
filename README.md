@@ -4,6 +4,16 @@
 # cl-flx
 > Rewrite emacs-flx in Common Lisp
 
+## 🔨 Usage
+
+WIP.
+
+## ⚜️ License
+
+`cl-flx` is distributed under the terms of the MIT license.
+
+See [LICENSE](./LICENSE) for details.
+
 
 <!-- Links -->
 
