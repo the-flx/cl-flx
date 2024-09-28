@@ -36,4 +36,4 @@ jobs:
 
     - name: Run tests
       run: |
-        ${LISP} --script ./test/test.lisp
+        ${{ env.LISP }} --script ./test/test.lisp
