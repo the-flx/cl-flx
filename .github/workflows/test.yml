@@ -23,7 +23,7 @@ jobs:
           #- windows-latest
         lisp:
           - sbcl
-          - ccl-bin
+          - ccl
     env:
       LISP: ${{ matrix.lisp }}
 
@@ -36,4 +36,4 @@ jobs:
 
     - name: Run tests
       run: |
-        sbcl --script ./test/test.lisp
+        ${LISP} --script ./test/test.lisp
