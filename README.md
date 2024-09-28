@@ -6,6 +6,10 @@
 
 [![CI](https://github.com/the-flx/cl-flx/actions/workflows/test.yml/badge.svg)](https://github.com/the-flx/cl-flx/actions/workflows/test.yml)
 
+This doesn't count as a rewrite since the original Emacs' flx
+written in Emacs Lisp are very close to Common Lisp.
+I only need to make tiny changes, which I consider effortless.
+
 ## 🔨 Usage
 
 ```lisp
