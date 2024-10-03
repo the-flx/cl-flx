@@ -1,7 +1,3 @@
-(defpackage flx
-  (:use :cl)
-  (:export score))
-
 (in-package :flx)
 
 (defvar word-separators '(#\Space #\- #\_ #\: #\. #\/ #\\)
