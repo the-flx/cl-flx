@@ -1,5 +1,4 @@
-(load "./src/package.lisp")
-(load "./src/main.lisp")
+(load "./flx.lisp")
 
 (let ((score (flx:score "buffer-file-name" "bfn")))
   (print score)
