@@ -1,5 +1,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Release](https://img.shields.io/github/tag/the-flx/cl-flx.svg?label=release&logo=github)](https://github.com/the-flx/cl-flx/releases/latest)
+[![](https://api.quickdocs.org/badge/flx.svg)](https://quickdocs.org/flx)
 
 # cl-flx
 > Rewrite emacs-flx in Common Lisp
