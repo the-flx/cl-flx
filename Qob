@@ -1,0 +1,3 @@
+;; -*- mode: lisp; lexical-binding: t -*-
+
+(source "quicklisp")
