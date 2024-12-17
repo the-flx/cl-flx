@@ -37,4 +37,5 @@ jobs:
 
     - name: Run tests
       run: |
+        qob install-deps --dev
         qob test
