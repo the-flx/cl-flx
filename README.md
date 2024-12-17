@@ -17,6 +17,15 @@ I only need to make tiny changes, which I consider effortless.
 (flx:score "buffer-file-name" "bfn")  ; '(237 0 7 12)
 ```
 
+## 🛠 Development
+
+To run tests, you need [Qob][] and execute the following commands:
+
+```sh
+$ qob install-deps --dev
+$ qob test
+```
+
 ## ⚜️ License
 
 `cl-flx` is distributed under the terms of the MIT license.
@@ -28,3 +37,5 @@ See [`LICENSE`](./LICENSE) for details.
 
 [flx]: https://github.com/lewang/flx
 [Emacs]: https://www.gnu.org/software/emacs/
+
+[Qob]: https://github.com/cl-qob/cli
