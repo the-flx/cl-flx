@@ -2,3 +2,6 @@
 *.fasl
 *.abcl
 *.abcl-tmp
+
+/.qob
+/dist
