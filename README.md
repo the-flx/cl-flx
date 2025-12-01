@@ -1,4 +1,5 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![SBCL Version](https://img.shields.io/badge/SBCL-2.2.9+-white.svg?logo=commonlisp&logoColor=white)](https://www.sbcl.org/)
 [![Release](https://img.shields.io/github/tag/the-flx/cl-flx.svg?label=release&logo=github)](https://github.com/the-flx/cl-flx/releases/latest)
 [![](https://api.quickdocs.org/badge/cl-flx.svg)](https://quickdocs.org/cl-flx)
 
